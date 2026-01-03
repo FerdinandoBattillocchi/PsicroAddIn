@@ -28,7 +28,7 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 public class PsicroAddIn : IExcelAddIn
 {
-    //const string DLL_PATH = @"C:\Users\Utente\source\repos\psicro\x64\Debug\psicro.dll";
+
     
     const string DLL_PATH = "psicro.dll";
     
@@ -776,4 +776,5 @@ public class PsicroRibbon : ExcelRibbon
     }
 
 }
+
 
