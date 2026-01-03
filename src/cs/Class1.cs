@@ -21,7 +21,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Remoting.Messaging;
 using System.Text;
-using System.Windows.Forms; // <- aggiungi questa using in cima al file
+using System.Windows.Forms; 
 using System.Xml.Linq;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
@@ -776,5 +776,6 @@ public class PsicroRibbon : ExcelRibbon
     }
 
 }
+
 
 
