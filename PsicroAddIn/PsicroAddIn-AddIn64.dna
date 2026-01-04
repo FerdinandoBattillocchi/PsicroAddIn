@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DnaLibrary
+  Name="PsicroAddIn Add-In"
+  RuntimeVersion="v4.0"
+  xmlns="http://schemas.excel-dna.net/addin/2020/07/dnalibrary">
+
+	<!-- Solo l'assembly .NET (che contiene la DLL come risorsa) -->
+	<ExternalLibrary
+	  Path="PsicroAddIn.dll"
+	  ExplicitExports="false"
+	  LoadFromBytes="true"
+	  Pack="true" />
+
+	<!-- NON includere psicro.dll qui, è già nel assembly -->
+
+</DnaLibrary>
