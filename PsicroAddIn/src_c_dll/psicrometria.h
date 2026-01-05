@@ -12,12 +12,12 @@
 #endif
  //#define PATM    101.325    
  #define CPAS    1.006      
- #define CPV     1.860       
- #define CPW     4.186      
+ #define CPV     1.805       
+ #define CPW     4.1868      
  #define LAMBDA  2501.0     
- #define RA    0.287042   // kJ/(kg·K)
- #define RV    0.461524   // kJ/(kg·K)
- #define RAV    0.621948   // Rapporto preciso (Rda/Rw)
+ #define RA      0.2870424636   // kJ/(kg·K)
+ #define RV      0.4615236365  // kJ/(kg·K)
+ #define RAV     0.6219453153   // Rapporto preciso (Rda/Rw)
 
 extern volatile double PATM;
 // Dichiarazione delle tue funzioni
