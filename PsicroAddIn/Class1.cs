@@ -91,10 +91,8 @@ public class PsicroAddIn : IExcelAddIn
     #region 1. DICHIARAZIONI DLL C (Import)
 
 
-    // Carichiamo la funzione per la quota dalla tua DLL C
+    // Carica la funzione per la quota dalla  DLL C
     [DllImport("psicro.dll", CallingConvention = CallingConvention.StdCall)]public static extern double Excel_set_quota(double altitude);
-    //[DllImport(DLL_PATH, CallingConvention = CallingConvention.StdCall)] public static extern double Excel_get_patm_at_altitude(double altitude);
-    
     [DllImport(DLL_PATH, CallingConvention = CallingConvention.StdCall)] public static extern double Excel_Psat(double t);
     [DllImport(DLL_PATH, CallingConvention = CallingConvention.StdCall)] public static extern double Excel_TPsat(double p_kpa);
     [DllImport(DLL_PATH, CallingConvention = CallingConvention.StdCall)] public static extern double Excel_xsat_t(double t);
@@ -277,8 +275,9 @@ public class PsicroAddIn : IExcelAddIn
     }
 
     // FINE ESPOSIZIONE COSTANTI
-    // FUNZIONE DEIDCATA AL CALCOLO DELL'ENTALPIA DEL VAPORE SATURO SECCO 
-
+    // FUNZIONE DEDICATA AL CALCOLO DELL'ENTALPIA DEL VAPORE SATURO SECCO 
+    // Correlazione polinomiale empirica di terzo grado per h_g,
+    // ottimizzata sull'intervallo 0-200 °C rispetto allo standard IAPWS-IF97
     private const double B0 = 2500.9;
     private const double B1 = 1.875;
     private const double B2 = -1.16e-3;
@@ -359,7 +358,7 @@ public class PsicroAddIn : IExcelAddIn
         return isIP ? hgSI * KjKgToBtuLb : hgSI;
     }
 
-
+//funzione PSICRO incorpora tutti i casi 
 [ExcelFunction(Name = "PSICRO",Description = "Calcolo psicrometrico / Psychrometric calculation",Category = CAT)]
     public static object PsicroProp(
     [ExcelArgument(Description = "Primo input (t, ur, x, h, v...) / First input")] string p1,
