@@ -17,89 +17,10 @@ public class PsicroAddIn : IExcelAddIn
 {
     
     const string DLL_PATH = "psicro.dll";
-    
     [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     static extern bool SetDllDirectory(string lpPathName);
-
     [DllImport("kernel32.dll", SetLastError = true)]
     static extern IntPtr LoadLibrary(string lpFileName);
-    /*
-    public void AutoOpen()
-    {
-        try
-        {
-            var asm = Assembly.GetExecutingAssembly();
-
-            // 1. Trova la risorsa embedded psicro.dll
-            string resourceName = null;
-            foreach (string n in asm.GetManifestResourceNames())
-            {
-                if (n.ToLower().Contains("psicro"))
-                {
-                    resourceName = n;
-                    break;
-                }
-            }
-
-            if (resourceName == null)
-                throw new Exception("Risorsa psicro.dll non trovata");
-
-            // 2. Usa AppData invece di TEMP (più persistente e pulito)
-            string appDataDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            string psicroDir = Path.Combine(appDataDir, "PsicroAddIn");
-            Directory.CreateDirectory(psicroDir);
-
-            string dllPath = Path.Combine(psicroDir, "psicro.dll");
-            string versionPath = Path.Combine(psicroDir, "version.txt");
-
-            // 3. Verifica se dobbiamo copiare (solo se nuova versione)
-            string currentVersion = asm.GetName().Version.ToString();
-            bool needCopy = true;
-
-            if (File.Exists(dllPath) && File.Exists(versionPath))
-            {
-                string existingVersion = File.ReadAllText(versionPath);
-                if (existingVersion == currentVersion)
-                {
-                    // Versione uguale, non serve copiare
-                    needCopy = false;
-                }
-            }
-
-            // 4. Copia la DLL solo se necessario
-            if (needCopy)
-            {
-                using (Stream s = asm.GetManifestResourceStream(resourceName))
-                using (FileStream fs = File.Create(dllPath))
-                {
-                    s.CopyTo(fs);
-                }
-
-                // Salva la versione corrente
-                File.WriteAllText(versionPath, currentVersion);
-            }
-
-            // 5. Imposta la directory e carica la DLL
-            SetDllDirectory(psicroDir);
-
-            IntPtr handle = LoadLibrary(dllPath);
-
-            if (handle == IntPtr.Zero)
-            {
-                int error = Marshal.GetLastWin32Error();
-                throw new Exception($"Errore caricamento DLL: {error}\nPercorso: {dllPath}");
-            }
-
-            // Successo - puoi rimuovere questo messaggio se vuoi
-            // MessageBox.Show($"DLL caricata da:\n{dllPath}", "PsicroAddIn - Successo");
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(ex.ToString(), "PsicroAddIn");
-        }
-    }
-    */
-
     public void AutoOpen()
     {
         try
@@ -166,8 +87,6 @@ public class PsicroAddIn : IExcelAddIn
         }
     }
     public void AutoClose() { }
-
-
 
     #region 1. DICHIARAZIONI DLL C (Import)
 
@@ -304,9 +223,141 @@ public class PsicroAddIn : IExcelAddIn
     #region 2. FUNZIONI EXCEL (Esposizione)
 
     private const string CAT = "Psicrometria";
-  
 
-  
+
+    // INIZIO ESPOSIZIONE DELLE COSTANTI INTERNE ALLA DLL
+
+    
+    [ExcelFunction(Name = "PSICRO.CP_DRYAIR", Description = "Calore specifico aria secca / Specific heat of dry air", Category = CAT)]
+    public static object Cpas([ExcelArgument(Description = "Unità di misura: 'SI' (default) o 'IP'")] object unit)
+    {
+        string unitStr = unit as string;
+        bool isIP = string.Equals(unitStr?.Trim(), "IP", StringComparison.OrdinalIgnoreCase);
+        return isIP ? 0.24 : 1.006;
+    }
+
+    [ExcelFunction(Name = "PSICRO.CP_VAPOR", Description = "Calore specifico vapore acqueo / Specific heat of water vapor", Category = CAT)]
+    public static object Cpv([ExcelArgument(Description = "Unità di misura: 'SI' (default) o 'IP'")] object unit)
+    {
+        string unitStr = unit as string;
+        bool isIP = string.Equals(unitStr?.Trim(), "IP", StringComparison.OrdinalIgnoreCase);
+        return isIP ? 0.444 : 1.86; // IP: BTU/lb·°F (Standard ASHRAE) | SI: kJ/kg·K
+    }
+
+    [ExcelFunction(Name = "PSICRO.CP_WATER", Description = "Calore specifico acqua liquida / Specific heat of liquid water", Category = CAT)]
+    public static object Cpw([ExcelArgument(Description = "Unità di misura: 'SI' (default) o 'IP'")] object unit)
+    {
+        string unitStr = unit as string;
+        bool isIP = string.Equals(unitStr?.Trim(), "IP", StringComparison.OrdinalIgnoreCase);
+        return isIP ? 1.0 : 4.1868; // IP: BTU/lb·°F (Per definizione) | SI: kJ/kg·K
+    }
+
+    [ExcelFunction(Name = "PSICRO.CP_ICE", Description = "Calore specifico ghiaccio / Specific heat of ice", Category = CAT)]
+    public static object Cpice([ExcelArgument(Description = "Unità di misura: 'SI' (default) o 'IP'")] object unit)
+    {
+        string unitStr = unit as string;
+        bool isIP = string.Equals(unitStr?.Trim(), "IP", StringComparison.OrdinalIgnoreCase);
+        return isIP ? 0.50 : 2.090; // IP: BTU/lb·°F | SI: kJ/kg·K
+    }
+
+    [ExcelFunction(Name = "PSICRO.LAT_VAP", Description = "Calore latente di vaporizzazione (0°C) / Latent heat of vaporization (32°F)", Category = CAT)]
+    public static object Lat_Vap([ExcelArgument(Description = "Unità di misura: 'SI' (default) o 'IP'")] object unit)
+    {
+        string unitStr = unit as string;
+        bool isIP = string.Equals(unitStr?.Trim(), "IP", StringComparison.OrdinalIgnoreCase);
+        return isIP ? 1075.4 : 2501.0; // IP: BTU/lb (A 32°F) | SI: kJ/kg (A 0°C)
+    }
+
+    [ExcelFunction(Name = "PSICRO.LAT_MELT", Description = "Calore latente di fusione ghiaccio / Latent heat of fusion of ice", Category = CAT)]
+    public static object Lat_Melt([ExcelArgument(Description = "Unità di misura: 'SI' (default) o 'IP'")] object unit)
+    {
+        string unitStr = unit as string;
+        bool isIP = string.Equals(unitStr?.Trim(), "IP", StringComparison.OrdinalIgnoreCase);
+        return isIP ? 144.0 : 333.4; // IP: BTU/lb (Valore standard US refrigeration) | SI: kJ/kg
+    }
+
+    // FINE ESPOSIZIONE COSTANTI
+    // FUNZIONE DEIDCATA AL CALCOLO DELL'ENTALPIA DEL VAPORE SATURO SECCO 
+
+    private const double B0 = 2500.9;
+    private const double B1 = 1.875;
+    private const double B2 = -1.16e-3;
+    private const double B3 = -4.30e-6;
+    private const double PsiToBar = 0.0689475729;
+    private const double KjKgToBtuLb = 1.0 / 2.326;
+
+    [ExcelFunction(Name = "PSICRO.HG_SATSTEAM", Description = "Entalpia specifica vapore saturo secco / Specific enthalpy of dry saturated steam", Category = "PSICRO")]
+    public static object HgSatSteam(
+        [ExcelArgument(Description = "Valore numerico di Temperatura o Pressione")] object value,
+        [ExcelArgument(Description = "Tipo di ingresso: 'T' (default) o 'P'. Accetta anche l'unità se invertito.")] object arg2,
+        [ExcelArgument(Description = "Unità di misura: 'SI' (default) o 'IP'. Accetta anche il tipo se invertito.")] object arg3)
+    {
+        // 1. Parsing sicuro del valore numerico principale
+        double inputVal;
+        try
+        {
+            inputVal = Convert.ToDouble(value);
+        }
+        catch
+        {
+            return ExcelError.ExcelErrorValue; // #VALORE!
+        }
+
+        // 2. DISACCOPPIAMENTO POSIZIONALE (Smart Parsing)
+        // Estraiamo i testi dai due argomenti opzionali (se presenti)
+        string str2 = (arg2 as string)?.Trim().ToUpper();
+        string str3 = (arg3 as string)?.Trim().ToUpper();
+
+        // Impostiamo i flag di default
+        bool isPressure = false;
+        bool isIP = false;
+
+        // Analizziamo il primo argomento opzionale
+        if (str2 == "P") isPressure = true;
+        else if (str2 == "IP") isIP = true;
+
+        // Analizziamo il secondo argomento opzionale
+        if (str3 == "P") isPressure = true;
+        else if (str3 == "IP") isIP = true;
+
+        // 3. LOGICA DI CALCOLO CORE (Invariata, lavora in SI)
+        double tSI = 0.0;
+
+        if (!isPressure)
+        {
+            tSI = isIP ? (inputVal - 32.0) / 1.8 : inputVal;
+        }
+        else
+        {
+            double pSI = isIP ? inputVal * PsiToBar : inputVal;
+
+            if (pSI < 0.00611 || pSI > 15.55)
+            {
+                return ExcelError.ExcelErrorNum; // #NUM!
+            }
+
+            double logP = Math.Log10(pSI);
+            if (pSI < 1.01325)
+            {
+                tSI = 1733.926 / (5.20389 - logP) - 233.665;
+            }
+            else
+            {
+                tSI = 1687.537 / (5.11564 - logP) - 230.000;
+            }
+        }
+
+        if (tSI < 0.0 || tSI > 200.0)
+        {
+            return ExcelError.ExcelErrorNum;
+        }
+
+        // Schema di Horner
+        double hgSI = B0 + tSI * (B1 + tSI * (B2 + tSI * B3));
+
+        // Ritorno del valore convertito
+        return isIP ? hgSI * KjKgToBtuLb : hgSI;
+    }
 
 
 [ExcelFunction(Name = "PSICRO",Description = "Calcolo psicrometrico / Psychrometric calculation",Category = CAT)]
